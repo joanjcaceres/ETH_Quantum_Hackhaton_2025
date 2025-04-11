@@ -12,7 +12,7 @@
 For quantum computing, the [Wigner function](https://en.wikipedia.org/wiki/Wigner_quasiprobability_distribution) is a natural way to measure quantum states. It provides a clear view of the state, making it ideal for state tomography ([quantum tomography](https://en.wikipedia.org/wiki/Quantum_tomography))—the method we use to see what’s happening inside a quantum computer.
 
 <div align="center">
-  <img src="images/cat.png" alt="Cat" width="250" />
+  <img src="images/cat.gif" alt="Cat" width="300" />
 </div>
 
 
