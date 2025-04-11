@@ -44,7 +44,7 @@ In this task, you will **reconstruct the quantum state $\rho$** from the **measu
 
 You already have access to simulated data: the Wigner function $W(x,p)$ sampled on a 2D grid. Your goal is to construct a fit procedure that transforms this phase-space data into an estimated density matrix $\tilde{\rho}$ that lives in Fock space.
 
-Before coding, we strongly recommend reviewing the [Theoretical Background]() of Wigner tomography and the role of displaced parity measurements.
+Before coding, we strongly recommend reviewing the [Theory Background](https://github.com/schlegeldavid/yq25_alice-bob_challenge/blob/descriptions/TheoryBackground.md) of Wigner tomography and the role of displaced parity measurements.
 
 ### From Wigner to Probabilities
 
