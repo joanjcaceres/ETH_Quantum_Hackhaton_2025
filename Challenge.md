@@ -2,6 +2,8 @@
 
 # 1. Getting Started - Understanding Wigner Functions and State Reconstruction
 
+Before coding, we strongly recommend reviewing the [Theory Background](https://github.com/schlegeldavid/yq25_alice-bob_challenge/blob/descriptions/TheoryBackground.md) and the [Dynamiqs tutorial]()
+
 ## Task A: Generate Wigner Functions
 
 The goal of this task is to generate Wigner functions for different quantum states using [dynamiqs](https://www.dynamiqs.org/stable/),  a simulation library based on [JAX](https://docs.jax.dev/en/latest/quickstart.html), that allows computations using CPUs or GPUs.
@@ -43,8 +45,6 @@ $$
 In this task, you will **reconstruct the quantum state $\rho$** from the **measured Wigner function $W(x,p)$.** This is a concrete example of [**quantum state tomography**](https://en.wikipedia.org/wiki/Quantum_tomography), where a continuous-variable quantum state is inferred from a set of measurable quantities.
 
 You already have access to simulated data: the Wigner function $W(x,p)$ sampled on a 2D grid. Your goal is to construct a fit procedure that transforms this phase-space data into an estimated density matrix $\tilde{\rho}$ that lives in Fock space.
-
-Before coding, we strongly recommend reviewing the [Theory Background](https://github.com/schlegeldavid/yq25_alice-bob_challenge/blob/descriptions/TheoryBackground.md) of Wigner tomography and the role of displaced parity measurements.
 
 ### From Wigner to Probabilities
 
