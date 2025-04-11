@@ -1,12 +1,20 @@
 # From Noise to Information: Reconstructing Quantum States from Wigner Functions
 
-![Logo](images/anb_logo.png)  
-**YQuantum 2025 - Alice &amp; Bob YQuantum Challenge**
+<div align="center">
+  <img src="images/anb_logo.png" alt="Cat" width="150" />
+</div>
+<div align="center">
+<strong>YQuantum 2025 - Alice &amp; Bob YQuantum Challenge</strong>
+</div>
+
 ## Overview
 
 For quantum computing, the [Wigner function](https://en.wikipedia.org/wiki/Wigner_quasiprobability_distribution) is a natural way to measure quantum states. It provides a clear view of the state, making it ideal for state tomography ([quantum tomography](https://en.wikipedia.org/wiki/Quantum_tomography))—the method we use to see what’s happening inside a quantum computer.
 
-![Cat](images/cat.png)
+<div align="center">
+  <img src="images/cat.png" alt="Cat" width="250" />
+</div>
+
 
 In practice, turning these measurements into a complete picture of the state is challenging due to noise and missing data. This challenge focuses on overcoming these issues to improve state reconstruction.
 
