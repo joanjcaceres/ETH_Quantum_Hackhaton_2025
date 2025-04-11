@@ -15,17 +15,17 @@ Compute the following states and visualize the associated Wigner functions:
 - **Cat states (2-cat and 3-cat states)**
 - **Dissipative Cat State from a Two-Photon Exchange Hamiltonian**
     - For this, we assume a dissipator of the form
-        
-        $$
-        \frac{d\rho}{dt} = \mathcal{L}(\rho) = -i[H, \rho] + \kappa_b\mathcal{D}[\hat{b}](\rho)
-        $$
+
+$$
+\frac{d\rho}{dt} = \mathcal{L}(\rho) = -i\[H, \rho\] + \kappa_b\mathcal{D}\[\hat{b}\](\rho)
+$$
         
 
 $$
 H = g_2^* {{}a^\dagger}^2 b + g_2 a^2 b^\dagger + \epsilon_b^*b + \epsilon_bb^\dagger
 $$
 
-Here $\mathcal{D}[X](\rho) = X\rho X^\dagger - \frac{1}{2}\rho X^\dagger X - \frac{1}{2}X^\dagger X \rho$ is the so-called *dissipator of the system.* Using `dynamiqs` simulate the time-evolution of this system with the following parameters:
+Here $\mathcal{D}\[X\](\rho) = X\rho X^\dagger - \frac{1}{2}\rho X^\dagger X - \frac{1}{2}X^\dagger X \rho$ is the so-called *dissipator of the system.* Using `dynamiqs` simulate the time-evolution of this system with the following parameters:
 
 $$
 g_2 = 1.0, \epsilon_d = -4, \kappa_b = 10
@@ -44,7 +44,7 @@ In this task, you will **reconstruct the quantum state $\rho$** from the **measu
 
 You already have access to simulated data: the Wigner function $W(x,p)$ sampled on a 2D grid. Your goal is to construct a fit procedure that transforms this phase-space data into an estimated density matrix $\tilde{\rho}$ that lives in Fock space.
 
-Before coding, we strongly recommend reviewing the [Theoretical Background](https://www.notion.so/Theory-Background-1b979f1ce44a80299ae0fe86b9ea36b4?pvs=21) of Wigner tomography and the role of displaced parity measurements.
+Before coding, we strongly recommend reviewing the [Theoretical Background]() of Wigner tomography and the role of displaced parity measurements.
 
 ### From Wigner to Probabilities
 
@@ -79,7 +79,7 @@ You need to implement a pipeline that:
 
 *Note*: Your measurement probabilities will depend on values $W(\alpha_k)$ and these may not be directly available on your original grid — you will need to address this yourself.
 
-1. **Map Wigner values to measurement probabilities:**
+3. **Map Wigner values to measurement probabilities:**
 
 Given the Wigner function at $\alpha_k$, compute:
 
@@ -89,7 +89,7 @@ $$
 
 These are the expected measurement outcomes for each displacement $\alpha_k$
 
-1.  **Define the measurement operator $E_{\alpha_k}$:**
+4.  **Define the measurement operator $E_{\alpha_k}$:**
 
 For each displacement $\alpha_k$ construct the observable:
 
@@ -97,9 +97,9 @@ $$
 E_{\alpha_k} = \frac{1}{2}(\mathbb{I} + D(\alpha_k) P D^\dagger(\alpha_k))
 $$
 
-*💡 Notes and Tips: When constructing $D(\alpha)$ and $P$ use a **larger Fock-space dimension** and truncate the result back to the original size. This improves the numerical quality of the operator and avoids edge effects due to truncation.*
+*💡 Notes and Tips: When constructing* $D(\alpha)$ *and* $P$ *use a **larger Fock-space dimension** and truncate the result back to the original size. This improves the numerical quality of the operator and avoids edge effects due to truncation.*
 
-1.  **Fit the density matrix**
+5.  **Fit the density matrix**
 
 You now want to find a density matrix $\tilde{\rho}$ such that the predicted probabilities
 
@@ -116,12 +116,12 @@ $$
 Where $\mathcal{M}$ is the set of valid density matrices:
 
 $$
-\rho \succeq 0 \,\,(\text{positive semidefinite}), \,\,\,\,\, \text{Tr}(\rho) = 1
+\rho \succeq 0\text{  (positive semidefinite),          }\text{   Tr}(\rho) = 1
 $$
 
 This is a **convex optimization problem,** and you can solve it using your favorite optimization tool. 
 
-1. **(Optional Task)  Explore Other Reconstruction Approaches:** While least-squares is simple and effective, it is not the only choice. You are encouraged to explore alternative reconstruction methods.
+6. **(Optional Task)  Explore Other Reconstruction Approaches:** While least-squares is simple and effective, it is not the only choice. You are encouraged to explore alternative reconstruction methods.
 
 **How to Evaluate the Fit**
 
@@ -160,13 +160,13 @@ In this task, you will explore how **robust** your reconstruction algorithm is b
     - Visualize the reconstructed state and compare it qualitatively to the expected features.
     - You will not have access to the ground truth $\rho$ but you can still analyze eigenvalue distributions, purity, or expected photon number.
 
+*💡 Notes and Tips:  The real dataset may be oversampled, meaning it contains far more data points than necessary. → Tip: Interpolating or intelligently subsampling the Wigner grid may help your algorithm run faster without hurting fidelity.*
+
 ### **📦 Deliverables**
 
 - Plots of fidelity $\text{F}(\rho,\tilde{\rho})$ vs. noise level $\sigma$ for different states.
 - A comparison between reconstructions from simulated and real Wigner data.
 - Optional: Additional evaluation metrics like purity, eigenvalue spectra, or expected photon number.
-
-*💡 Notes and Tips:  The real dataset may be oversampled, meaning it contains far more data points than necessary. → Tip: Interpolating or intelligently subsampling the Wigner grid may help your algorithm run faster without hurting fidelity.*
 
 ---
 
@@ -182,9 +182,9 @@ $$
 W_{measured}(x,p) = a W_{\rho}(x,p) + b + \text{noise}
 $$
 
-This affine transformation includes an **unknown scale $a$,** an **unknown offset $b$,** and some ****additive noise. ****Your objective is to **estimate** and **remove** these distortions, ensuring the “corrected” Wigner function is as close to the true $W_\rho(x,p)$ as possible. 
+This affine transformation includes an **unknown scale $a$, an **unknown offset $b$,** and some additive noise. Your objective is to **estimate** and **remove** these distortions, ensuring the “corrected” Wigner function is as close to the true $W_\rho(x,p)$ as possible. 
 
-You are provided with a total of **10 noisy Wigner functions**, each representing a quantum state affected by affine distortions and/or noise. These are split into two categories:
+You are provided with a total of **16 noisy Wigner functions**, each representing a quantum state affected by affine distortions and/or noise. These are split into two categories:
 
 - **8 noisy Wigner functions**: Use these to develop and test your denoising and affine correction methods.
 - **8 noisy Wigner functions with the corresponding clean state $\rho$:** Use them to validate how well your method works, by comparing your output with the known clean Wigner functions. ⚠️ *Do not hardcode your solution based on these examples—each Wigner has different parameters and distortions, so solutions must be general.*
@@ -214,13 +214,13 @@ $$
 W_{\rm corrected}(x,p) = \frac{1}{a} \cdot (W_{\rm measured}(x,p) - b)
 $$
 
-1. Filter or De-Noise
+2. Filter or De-Noise
 
 Apply a **2D [Gaussian filter](https://en.wikipedia.org/wiki/Gaussian_filter)** to reduce high-frequency noise in the Wigner distribution. This helps smooth out sharp, non-physical fluctuations caused by measurement error. There's no universally optimal choice for the filter width (standard deviation $\sigma$). Try different values and evaluate their effect on reconstruction fidelity. Small $\sigma$ retains detail but may leave noise; large $\sigma$ smooths aggressively but may wash out fine structure.
 
-1. Validate and Benchmark:
+3. Validate and Benchmark:
 
-Use **noisy Wigner functions with clean references** and ****apply your reconstruction to both the raw and the denoised version, then compare the results to the clean reference by computing the fidelities:
+Use **noisy Wigner functions with clean references** and apply your reconstruction to both the raw and the denoised version, then compare the results to the clean reference by computing the fidelities:
 
 - $F_{\text{raw}} = F(\rho_{\text{ref}}, \tilde{\rho}_{\text{raw}})$
 - $F_{\text{denoised}} = F(\rho_{\text{ref}}, \tilde{\rho}_{\text{denoised}})$
@@ -256,7 +256,7 @@ In many practical scenarios, conventional filtering methods (like Gaussian smoot
 
 Create **multiple noise models** to simulate imperfections seen in experiments (investigate).
 
-1. **Build a Supervised Dataset**
+2. **Build a Supervised Dataset**
 - **Generate Clean Wigners**: Simulate a variety of pure quantum states
 - **Corrupt the Data**: Apply your noise models to generate paired samples
 
@@ -265,7 +265,7 @@ $$
 $$
 
 - **Split Your Data**: Create distinct **training**, **validation**, and **test** sets to assess generalization. Ensure that your test set includes Wigner functions of **new states not seen during training** — not just new noise samples on familiar ones.
-1. **Train a Denoising Model**
+3. **Train a Denoising Model**
 - Choose a network architecture suited to 2D grid input:
 - Use **supervised learning**: Train your model on pairs $(\tilde{W}, W)$ to minimize reconstruction loss, such as:
 
@@ -275,7 +275,7 @@ $$
 
 Feel free to **experiment** with other losses—especially if your model fails to preserve **important quantum features** like Wigner negativity or interference fringes in cat states.
 
-1. **Evaluate: Reconstruction and Fidelity**
+4. **Evaluate: Reconstruction and Fidelity**
 
 After denoising a test sample:
 
@@ -289,7 +289,7 @@ $$
     - Before denoising: $F_{\text{raw}} = F(\rho, \tilde{\rho}_{\text{raw}})$
     - After denoising: $F_{\text{denoised}} = F(\rho, \tilde{\rho}_{\text{denoised}})$
 - Report $\Delta F$ (fidelity improvement) across your test set.
-1. Test on Real Data
+5. Test on Real Data
 
 Once trained, apply your model to the **experimental Wigner functions** from the earlier tasks. These have no known ground truth, but visual inspection and smoother reconstructions can offer qualitative feedback.
 
