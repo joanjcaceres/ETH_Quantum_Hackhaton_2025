@@ -182,7 +182,7 @@ $$
 W_{measured}(x,p) = a W_{\rho}(x,p) + b + \text{noise}
 $$
 
-This affine transformation includes an **unknown scale $a$, an **unknown offset $b$,** and some additive noise. Your objective is to **estimate** and **remove** these distortions, ensuring the “corrected” Wigner function is as close to the true $W_\rho(x,p)$ as possible. 
+This affine transformation includes an **unknown scale** $a$, an **unknown offset $b$,** and some additive noise. Your objective is to **estimate** and **remove** these distortions, ensuring the “corrected” Wigner function is as close to the true $W_\rho(x,p)$ as possible. 
 
 You are provided with a total of **16 noisy Wigner functions**, each representing a quantum state affected by affine distortions and/or noise. These are split into two categories:
 
