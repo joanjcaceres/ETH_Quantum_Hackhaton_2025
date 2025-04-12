@@ -2,7 +2,7 @@
 
 # 1. Getting Started - Understanding Wigner Functions and State Reconstruction
 
-Before coding, we strongly recommend reviewing the [Theory Background](https://github.com/schlegeldavid/yq25_alice-bob_challenge/blob/descriptions/TheoryBackground.md) of Wigner tomography and the role of displaced parity measurements.
+Before coding, we strongly recommend reviewing the [Theory Background](https://github.com/schlegeldavid/yq25_alice-bob_challenge/blob/main/TheoryBackground.md) of Wigner tomography and the role of displaced parity measurements.
 
 ## Task A: Generate Wigner Functions
 
