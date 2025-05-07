@@ -28,7 +28,7 @@ You already have access to simulated data: the Wigner function $W(x,p)$ sampled 
 
 ### From Wigner to Probabilities
 
-Before starting, make sure to review the accompanying theoretical notes, where we show that:Recall that the Wigner function can be interpreted as the expectation value of a **displaced parity measurement**:
+Before starting, make sure to review the accompanying theoretical notes, where we show that the Wigner function can be interpreted as the expectation value of a **displaced parity measurement**:
 
 $$
 W(\alpha) = \frac{2}{\pi}\text{Tr}[D(\alpha)PD^\dagger(\alpha)]
