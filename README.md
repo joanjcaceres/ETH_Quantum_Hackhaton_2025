@@ -4,7 +4,7 @@
   <img src="images/anb_logo.png" alt="Cat" width="150" />
 </div>
 <div align="center">
-<strong>YQuantum 2025 - Alice &amp; Bob YQuantum Challenge</strong>
+<strong>ETH Quantum Hackathon 2025 - Alice &amp; Bob ETH Challenge</strong>
 </div>
 
 ## Overview
