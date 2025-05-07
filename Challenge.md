@@ -123,7 +123,7 @@ Evaluate how well the reconstruction performs for different states, including **
 
 ## **Task C: Robustness of the fit**
 
-In practice, Wigner data obtained from experiments is never perfect, it often contains **measurement noise.** n some cases, the Wigner function may contain **many more phase-space points than your reconstruction algorithm can handle efficiently**, either due to computational limitations or because your fit function assumes a smaller number of displacement points.
+In practice, Wigner data obtained from experiments is never perfect, it often contains **measurement noise.** In some cases, the Wigner function may contain **many more phase-space points than your reconstruction algorithm can handle efficiently**, either due to computational limitations or because your fit function assumes a smaller number of displacement points.
 
 In this task, you will explore how **robust** your reconstruction algorithm is by simulating noisy data, and you will also **test your method on real experimental data**.
 
