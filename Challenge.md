@@ -15,30 +15,10 @@ Compute the following states and visualize the associated Wigner functions:
 - **Fock states** $\ket{n}$
 - **Coherent States** $\ket{\alpha}$
 - **Cat states (2-cat and 3-cat states)**
-- **Dissipative Cat State from a Two-Photon Exchange Hamiltonian**
-    - For this, we assume a dissipator of the form
-
-$$
-\frac{d\rho}{dt} = \mathcal{L}(\rho) = -i\[H, \rho\] + \kappa_b\mathcal{D}\[\hat{b}\](\rho)
-$$
-        
-
-$$
-H = g_2^* {{}a^\dagger}^2 b + g_2 a^2 b^\dagger + \epsilon_b^*b + \epsilon_bb^\dagger
-$$
-
-Here $\mathcal{D}\[X\](\rho) = X\rho X^\dagger - \frac{1}{2}\rho X^\dagger X - \frac{1}{2}X^\dagger X \rho$ is the so-called *dissipator of the system.* Using `dynamiqs` simulate the time-evolution of this system with the following parameters:
-
-$$
-g_2 = 1.0, \epsilon_b = -4, \kappa_b = 10
-$$
-
-(For now, we pretend that the parameters are without dimensions). Use an initial state $\ket{\psi_0}$ in which both the buffer and the memory are in the vacuum. You can play with a different Hilbert-space truncation. Simulate the dynamics for a time $T = 4$. Plot the Wigner function of mode $a$ as a GIF. 
 
 ### **📦 Deliverables**
 
 - Static Wigner function plots for each state.
-- A **GIF animation** showing the evolution of the **dissipative cat state’s Wigner function**.
 
 ## **Task B: Density Matrix Reconstruction from Wigner Data**
 
