@@ -5,9 +5,9 @@
 </div>
 <div align="center">
 <strong>ETH Quantum Hackathon 2025 - Alice &amp; Bob ETH Challenge</strong>
+  
+<strong>[Link to Challenge repository](https://github.com/schlegeldavid/eth25_alice-bob_challenge/)</strong>
 </div>
-
-[Link to Challenge repository:](https://github.com/schlegeldavid/eth25_alice-bob_challenge/)
 
 
 ## Overview
