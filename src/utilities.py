@@ -4,9 +4,60 @@ import dynamiqs as dq
 import jax.numpy as jnp
 from scipy.interpolate import RegularGridInterpolator
 from typing import Sequence, Optional, List, Tuple, Dict, Any
+from dataclasses import dataclass
+
+@dataclass
+class TomographyMetrics:
+    fidelity: float
+    trace_dist: float
+    HS_dist: float
+    purity_rec: float
+    eig_true: np.ndarray
+    eig_rec: np.ndarray
+    
+    def __repr__(self) -> str:
+        return (f"TomographyMetrics(\n"
+                f"  fidelity: {self.fidelity:.6f},\n"
+                f"  trace_dist: {self.trace_dist:.6f},\n"
+                f"  HS_dist: {self.HS_dist:.6f},\n"
+                f"  purity_rec: {self.purity_rec:.6f},\n"
+                f"  eig_true: {np.array2string(self.eig_true, precision=4, separator=', ')},\n"
+                f"  eig_rec: {np.array2string(self.eig_rec, precision=4, separator=', ')}\n"
+                f")")
+    
+    
+def rho_cat_state(N: int, alpha: float, sign: str = '+') -> dq.QArray:
+    """
+    Generate a normalized cat state (|+⟩ or |−⟩) and return its density matrix.
+
+    Parameters
+    ----------
+    N : int
+        Hilbert space dimension.
+    beta : float
+        Coherent state amplitude.
+    sign : str
+        '+' for cat plus (|β⟩ + |−β⟩), '-' for cat minus (|β⟩ − |−β⟩).
+
+    Returns
+    -------
+    rho_cat : dq.QArray
+        Density matrix of the normalized cat state.
+    """
+    coh_plus = dq.coherent(N, alpha)
+    coh_minus = dq.coherent(N, -alpha)
+
+    if sign == '+':
+        cat = dq.unit(coh_plus + coh_minus)
+    elif sign == '-':
+        cat = dq.unit(coh_plus - coh_minus)
+    else:
+        raise ValueError("sign must be '+' or '-'")
+
+    return cat @ cat.dag()
 
     
-def tomography_and_evaluate(
+def rho_reconstruction(
     W_grid: np.ndarray,
     xvec: np.ndarray,
     pvec: np.ndarray,
@@ -17,7 +68,7 @@ def tomography_and_evaluate(
     solver: str ='SCS',
     objective: str ='sum_squares',
     **kwargs
-    ) -> Tuple[dq.QArray, List[float], List[dq.QArray], Dict[str, Any]]:
+    ) -> Tuple[dq.QArray, List[float], List[dq.QArray], TomographyMetrics]:
 
     """
     Perform quantum state tomography via Wigner sampling and convex optimization, 
@@ -56,15 +107,15 @@ def tomography_and_evaluate(
         Expected probabilities from Wigner sampling at each alpha_k.
     E_ops_big : list of dynamiqs.QArray
         POVM elements E(alpha_k) = ½(I + D(alpha) P D(alpha)†) used in the fit.
-    metrics : dict
-        Evaluation metrics with keys:
-        - 'fidelity'    : float, state fidelity between true and reconstructed.
-        - 'trace_dist'  : float, trace distance ½‖rho_true - rho_rec‖₁.
-        - 'HS_dist'     : float, Hilbert-Schmidt distance.
-        - 'purity_rec'  : float, purity of reconstructed state.
-        - 'delta_purity': float, purity_true - purity_rec.
-        - 'eig_true'    : ndarray, sorted eigenvalues of rho_true.
-        - 'eig_rec'     : ndarray, sorted eigenvalues of rho_rec.
+    metrics : TomographyMetrics
+        Evaluation metrics:
+        - fidelity    : float, state fidelity between true and reconstructed.
+        - trace_dist  : float, trace distance ½‖rho_true - rho_rec‖₁.
+        - HS_dist     : float, Hilbert-Schmidt distance.
+        - purity_rec  : float, purity of reconstructed state.
+        - eig_true    : ndarray, sorted eigenvalues of rho_true.
+        - eig_rec     : ndarray, sorted eigenvalues of rho_rec.
+        
 
     Raises
     ------
@@ -118,27 +169,24 @@ def tomography_and_evaluate(
     problem = cp.Problem(obj, constraints)
     problem.solve(solver=solver, max_iters=max_iters)
     rho_opt = rho_var.value
-    rho_rec_q = dq.asqarray(rho_opt)
+    rho_reconstructed = dq.asqarray(rho_opt)
 
     # Evaluate metrics
-    F = dq.fidelity(rho_true, rho_rec_q)
+    F = dq.fidelity(rho_true, rho_reconstructed)
     eig_true = np.sort(np.real(np.array(jnp.linalg.eigvals(rho_true.data))))[::-1]
-    eig_rec = np.sort(np.real(np.array(jnp.linalg.eigvals(rho_rec_q.data))))[::-1]
-    delta = rho_true.data - rho_rec_q.data
+    eig_rec = np.sort(np.real(np.array(jnp.linalg.eigvals(rho_reconstructed.data))))[::-1]
+    delta = rho_true.data - rho_reconstructed.data
     Tdist = 0.5 * jnp.sum(jnp.abs(jnp.linalg.eigvals(delta)))
     HSdist = jnp.sqrt(jnp.trace(delta @ delta))
-    purity_true = jnp.trace(rho_true.data @ rho_true.data)
-    purity_rec = jnp.trace(rho_rec_q.data @ rho_rec_q.data)
-    d_purity = purity_true - purity_rec
+    purity_rec = jnp.trace(rho_reconstructed.data @ rho_reconstructed.data)
 
-    metrics = {
-        'fidelity': float(F),
-        'trace_dist': float(Tdist),
-        'HS_dist': float(jnp.real(HSdist)),
-        'purity_rec': float(jnp.real(purity_rec)),
-        'delta_purity': float(jnp.real(d_purity)),
-        'eig_true': eig_true,
-        'eig_rec': eig_rec
-    }
+    metrics = TomographyMetrics(
+        fidelity=float(F),
+        trace_dist=float(Tdist),
+        HS_dist=float(jnp.real(HSdist)),
+        purity_rec=float(jnp.real(purity_rec)),
+        eig_true=eig_true,
+        eig_rec=eig_rec
+    )
 
-    return rho_rec_q, w_k, E_ops_big, metrics
+    return rho_reconstructed, w_k, E_ops_big, metrics
