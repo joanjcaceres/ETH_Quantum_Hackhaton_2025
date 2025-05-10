@@ -21,8 +21,8 @@ class TomographyMetrics:
                 f"  trace_dist: {self.trace_dist:.6f},\n"
                 f"  HS_dist: {self.HS_dist:.6f},\n"
                 f"  purity_rec: {self.purity_rec:.6f},\n"
-                f"  eig_true: {np.array2string(self.eig_true, precision=4, separator=', ')},\n"
-                f"  eig_rec: {np.array2string(self.eig_rec, precision=4, separator=', ')}\n"
+                f"  eig_true: {np.array2string(self.eig_true[:3], precision=4, separator=', ')},\n"
+                f"  eig_rec: {np.array2string(self.eig_rec[:3], precision=4, separator=', ')}\n"
                 )
     
     
@@ -196,10 +196,10 @@ def integral_2d(dx: float, dy: float, z: np.ndarray) -> float:
     return float(dx * dy * np.nansum(z))
 
 
-def rescale_wigner(
+def wigner_affine_correction(
     x_values: np.ndarray,
     y_values: np.ndarray,
-    wigner_values: np.ndarray
+    wigner_values: np.ndarray,
 ) -> Tuple[np.ndarray, float, float]:
     """
     Rescale a Wigner function by removing a background offset and normalizing its integral.
@@ -222,20 +222,36 @@ def rescale_wigner(
     b : float
         Background offset estimated outside a defined radius.
     """
-    mask_not_nan = ~np.isnan(wigner_values)
+    # Create meshgrid for all x,y points
+    X, Y = np.meshgrid(x_values, y_values, indexing='ij')
+    
+    # Create a mask for points at the edge of the grid
+    not_nan_mask = ~np.isnan(wigner_values)
+    border_mask = np.zeros_like(wigner_values, dtype=bool)
 
-    X, Y = np.meshgrid(x_values, y_values, indexing='xy')
-    radius_squared = 5.5**2
-    mask_background = (X**2 + Y**2) >= radius_squared
-    mask_background &= mask_not_nan
+    lines= 2
+    border_mask[0:lines, :] = not_nan_mask[0:lines, :]  # Left edge (first two rows)
+    border_mask[-lines:, :] = not_nan_mask[-lines:, :]  # Right edge (last two rows)
+    border_mask[:, 0:lines] = not_nan_mask[:, 0:lines]  # Bottom edge (first two columns)
+    border_mask[:, -lines:] = not_nan_mask[:, -lines:]  # Top edge (last two columns)
 
-    b = float(np.mean(wigner_values[mask_background]))
-    dx = x_values[1] - x_values[0]
-    dy = y_values[1] - y_values[0]
-    a = integral_2d(dx, dy, wigner_values[mask_not_nan] - b)
+    # Remove the nan values of the edge mask
+    border_mask[np.isnan(wigner_values)] = False
 
-    corrected_wigner = np.nan_to_num((wigner_values - b) / a)
-    return corrected_wigner, a, b
+    offset = np.mean(wigner_values[border_mask])
+    
+    # Replace NaNs with zeros for normalization and correction
+    wigner_clean = np.nan_to_num(wigner_values, nan=offset)
+    
+    # Compute normalization on the cleaned data
+    normalization = np.trapezoid(
+        np.trapezoid(wigner_clean - offset, x=y_values, axis=1),
+        x=x_values
+    )
+    
+    # Apply affine correction
+    corrected_wigner = (wigner_clean - offset) / normalization
+    return corrected_wigner, normalization, offset
 
 def get_denoising_fidelity(
     wigner_data: np.ndarray,
