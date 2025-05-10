@@ -63,7 +63,7 @@ def rho_reconstruction(
     pvec: np.ndarray,
     alpha_list: Sequence[complex],
     N_psi: int,
-    rho_true: dq.QArray,
+    rho_reference: dq.QArray,
     N_fit: Optional[int] = None, 
     solver: str ='SCS',
     objective: str ='sum_squares',
@@ -172,10 +172,10 @@ def rho_reconstruction(
     rho_reconstructed = dq.asqarray(rho_opt)
 
     # Evaluate metrics
-    F = dq.fidelity(rho_true, rho_reconstructed)
-    eig_true = np.sort(np.real(np.array(jnp.linalg.eigvals(rho_true.data))))[::-1]
+    F = dq.fidelity(rho_reference, rho_reconstructed)
+    eig_true = np.sort(np.real(np.array(jnp.linalg.eigvals(rho_reference.data))))[::-1]
     eig_rec = np.sort(np.real(np.array(jnp.linalg.eigvals(rho_reconstructed.data))))[::-1]
-    delta = rho_true.data - rho_reconstructed.data
+    delta = rho_reference.data - rho_reconstructed.data
     Tdist = 0.5 * jnp.sum(jnp.abs(jnp.linalg.eigvals(delta)))
     HSdist = jnp.sqrt(jnp.trace(delta @ delta))
     purity_rec = jnp.trace(rho_reconstructed.data @ rho_reconstructed.data)
