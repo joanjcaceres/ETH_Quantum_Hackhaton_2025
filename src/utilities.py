@@ -2,11 +2,14 @@ import numpy as np
 import cvxpy as cp
 import dynamiqs as dq
 import jax.numpy as jnp
-from typing import Callable, Sequence, Optional, List, Tuple, Dict, Any
+from scipy.interpolate import RegularGridInterpolator
+from typing import Sequence, Optional, List, Tuple, Dict, Any
 
     
 def tomography_and_evaluate(
-    wigner_fn: Callable[[float, float], float],
+    W_grid: np.ndarray,
+    xvec: np.ndarray,
+    pvec: np.ndarray,
     alpha_list: Sequence[complex],
     N_psi: int,
     rho_true: dq.QArray,
@@ -22,9 +25,12 @@ def tomography_and_evaluate(
 
     Parameters
     ----------
-    wigner_fn : callable
-        Function W(x, p) → float that evaluates the Wigner function at real
-        phase-space coordinates x, p.
+    W_grid : np.ndarray
+        2D array of Wigner function values on a grid defined by xvec and pvec.
+    xvec : np.ndarray
+        1D array of x-coordinates for the Wigner grid.
+    pvec : np.ndarray
+        1D array of p-coordinates for the Wigner grid.
     alpha_list : sequence of complex
         Displacement parameters alpha_k used to probe the state.
     N_psi : int
@@ -53,12 +59,12 @@ def tomography_and_evaluate(
     metrics : dict
         Evaluation metrics with keys:
         - 'fidelity'    : float, state fidelity between true and reconstructed.
-        - 'trace_dist'  : float, trace distance ½‖ρ_true − ρ_rec‖₁.
+        - 'trace_dist'  : float, trace distance ½‖rho_true - rho_rec‖₁.
         - 'HS_dist'     : float, Hilbert-Schmidt distance.
         - 'purity_rec'  : float, purity of reconstructed state.
         - 'delta_purity': float, purity_true - purity_rec.
-        - 'eig_true'    : ndarray, sorted eigenvalues of ρ_true.
-        - 'eig_rec'     : ndarray, sorted eigenvalues of ρ_rec.
+        - 'eig_true'    : ndarray, sorted eigenvalues of rho_true.
+        - 'eig_rec'     : ndarray, sorted eigenvalues of rho_rec.
 
     Raises
     ------
@@ -66,14 +72,19 @@ def tomography_and_evaluate(
         If `objective` is not one of {'sum_squares', 'sum_absolute'}.
     """
     max_iters = kwargs.get('max_iters', 1000)
-    
-    if N_fit is None:
-        N_fit = 2 * N_psi  # ensure larger dimension
+
+    if W_grid.shape != (len(xvec), len(pvec)):
+        raise ValueError(f"W_grid shape {W_grid.shape} does not match xvec and pvec lengths {len(xvec)}, {len(pvec)}")
+        
+    W_interp = RegularGridInterpolator((xvec, pvec), W_grid, bounds_error=False, fill_value=0.0)
+    wigner_fn = lambda x, p: W_interp((x, p))
         
     # Calculate expected measurement outcomes from Wigner
     w_k = [0.5 * (1 + (np.pi / 2) * wigner_fn(alpha.real, alpha.imag))
            for alpha in alpha_list]
     
+    if N_fit is None:
+        N_fit = 2 * N_psi  # ensure larger dimension
     # Build POVM elements E(alpha) = ½(I + D(alpha) P D(alpha)†)
     I_big = dq.eye(N_fit)
     P_big = dq.parity(N_fit)
