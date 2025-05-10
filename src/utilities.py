@@ -2,15 +2,13 @@ import numpy as np
 import cvxpy as cp
 import dynamiqs as dq
 import jax.numpy as jnp
-from scipy.interpolate import RegularGridInterpolator
     
 def tomography_and_evaluate(
-    psi,
-    xvec,
-    pvec, 
+    wigner_fn,
     alpha_list,
+    N_psi,
+    rho_true,
     N_fit = None, 
-    sigma = 0.0,
     solver='SCS',
     objective='sum_squares'
     ):
@@ -18,7 +16,7 @@ def tomography_and_evaluate(
     Full pipeline: Wigner sampling → convex optimization → evaluation metrics.
     
     Inputs:
-      psi        : pure state ket (DenseQArray)
+      wigner_fn  : callable wigner_fn(x, p) → float
       xvec, pvec : 1D numpy arrays defining the Wigner grid
       alpha_list : list of complex displacements alpha_k
       N_fit      : Hilbert dimension for fitting (default: max(2*N_psi, N_psi))
@@ -33,36 +31,28 @@ def tomography_and_evaluate(
       metrics    : dict with fidelity, trace_dist, HS_dist, delta_purity, eig_true, eig_rec
     """
     
-    N_psi = psi.shape[0]
     if N_fit is None:
         N_fit = max(N_psi, 2 * N_psi)  # ensure larger dimension
         
-    # 1) Compute Wigner on (xvec,pvec) and convert to NumPy
-    xg, pg, W_jax = dq.wigner(psi, xvec=xvec, yvec=pvec)
-    W_grid = np.asarray(W_jax)
-    # 2) Build interpolator
-    W_interp = RegularGridInterpolator((xg, pg), W_grid,
-                                       method='linear', bounds_error=False, fill_value=0.0)
-    # 3) Observed click-rates w_k
-    noise = np.random.normal(loc=0.0, scale=sigma, size=len(alpha_list))  # changed code
-    w_k = [0.5 * (1 + (np.pi/2) * W_interp((alpha.real, alpha.imag)) + noise[i])
-           for i, alpha in enumerate(alpha_list)]
+    # 1. Calculate expected click outcomes from Wigner
+    w_k = [0.5 * (1 + (np.pi / 2) * wigner_fn(alpha.real, alpha.imag))
+           for alpha in alpha_list]
     # 4) Build POVM elements E(alpha) = ½(I + D(alpha) P D(alpha)†)
-    I = dq.eye(N_fit)
-    P = dq.parity(N_fit)
-    E_ops = [0.5 * (I + dq.displace(N_fit, alpha) @ P @ dq.displace(N_fit, alpha).dag())
+    I_big = dq.eye(N_fit)
+    P_big = dq.parity(N_fit)
+    E_ops_big = [0.5 * (I_big + dq.displace(N_fit, alpha) @ P_big @ dq.displace(N_fit, alpha).dag())
              for alpha in alpha_list]
     
     # 5) Convert E_ops → NumPy matrices for CVXPY
     E_mats = []
-    for E in E_ops:
+    for E in E_ops_big:
         E_np = np.array(E.data)[:N_psi, :N_psi]
         E_np = 0.5 * (E_np + E_np.conj().T)  # ensure Hermitian
         E_mats.append(E_np)
         
     # 6) Solve least-squares tomography via CVXPY
-    rho_var = cp.Variable((N_psi, N_psi), complex=True)
-    cons = [
+    rho_var = cp.Variable((N, N), complex=True)
+    constraints = [
         rho_var >> 0,
         cp.trace(rho_var) == 1,
         rho_var == rho_var.H
@@ -76,21 +66,22 @@ def tomography_and_evaluate(
     else:
         raise ValueError(f"Unsupported objective: {objective}")
 
-    prob = cp.Problem(obj, cons)
-    prob.solve(solver=solver)
+    problem = cp.Problem(obj, constraints)
+    problem.solve(solver=solver)
     rho_opt = rho_var.value
     rho_rec_q = dq.asqarray(rho_opt)
-    # 7) Compute evaluation metrics
-    rho_true = psi @ psi.dag()
+
+    metrics = None
     F = dq.fidelity(rho_true, rho_rec_q)
     eig_true = np.sort(np.real(np.array(jnp.linalg.eigvals(rho_true.data))))[::-1]
-    eig_rec  = np.sort(np.real(np.array(jnp.linalg.eigvals(rho_rec_q.data))))[::-1]
+    eig_rec = np.sort(np.real(np.array(jnp.linalg.eigvals(rho_rec_q.data))))[::-1]
     delta = rho_true.data - rho_rec_q.data
     Tdist = 0.5 * jnp.sum(jnp.abs(jnp.linalg.eigvals(delta)))
     HSdist = jnp.sqrt(jnp.trace(delta @ delta))
     purity_true = jnp.trace(rho_true.data @ rho_true.data)
-    purity_rec  = jnp.trace(rho_rec_q.data  @ rho_rec_q.data)
-    d_purity    = purity_true - purity_rec
+    purity_rec = jnp.trace(rho_rec_q.data @ rho_rec_q.data)
+    d_purity = purity_true - purity_rec
+
     metrics = {
         'fidelity': float(F),
         'trace_dist': float(Tdist),
@@ -99,4 +90,5 @@ def tomography_and_evaluate(
         'eig_true': eig_true,
         'eig_rec': eig_rec
     }
-    return rho_rec_q, w_k, E_ops, metrics
+
+    return rho_rec_q, w_k, E_ops_big, metrics
