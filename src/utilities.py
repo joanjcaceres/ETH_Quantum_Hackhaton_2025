@@ -191,28 +191,51 @@ def rho_reconstruction(
 
     return rho_reconstructed, w_k, E_ops_big, metrics
 
-def integral_2d(dx, dy, z):
-    return dx * dy * np.nansum(z)
+def integral_2d(dx: float, dy: float, z: np.ndarray) -> float:
+    """Compute the 2D integral over a grid with spacing dx and dy, ignoring NaNs."""
+    return float(dx * dy * np.nansum(z))
 
-def rescale_wigner(x_values, y_values, wigner_values):
+
+def rescale_wigner(
+    x_values: np.ndarray,
+    y_values: np.ndarray,
+    wigner_values: np.ndarray
+) -> Tuple[np.ndarray, float, float]:
+    """
+    Rescale a Wigner function by removing a background offset and normalizing its integral.
+
+    Parameters
+    ----------
+    x_values : np.ndarray
+        1D array of x-coordinates.
+    y_values : np.ndarray
+        1D array of y-coordinates.
+    wigner_values : np.ndarray
+        2D array of Wigner function values.
+
+    Returns
+    -------
+    corrected_wigner : np.ndarray
+        Affine-rescaled Wigner function.
+    a : float
+        Normalization factor used in the rescaling.
+    b : float
+        Background offset estimated outside a defined radius.
+    """
     mask_not_nan = ~np.isnan(wigner_values)
 
-    #estimate b from outside a circle and a from normalization
     X, Y = np.meshgrid(x_values, y_values, indexing='xy')
-    radius = 5.5
-    mask = (X**2 + Y**2) >= radius**2
-    mask &= mask_not_nan
+    radius_squared = 5.5**2
+    mask_background = (X**2 + Y**2) >= radius_squared
+    mask_background &= mask_not_nan
 
-    b = np.mean(wigner_values[mask])
+    b = float(np.mean(wigner_values[mask_background]))
     dx = x_values[1] - x_values[0]
     dy = y_values[1] - y_values[0]
     a = integral_2d(dx, dy, wigner_values[mask_not_nan] - b)
 
-    #affine correction
     corrected_wigner = np.nan_to_num((wigner_values - b) / a)
-
-    #apply 2D Gaussian filter
-    return corrected_wigner,a,b
+    return corrected_wigner, a, b
 
 def get_denoising_fidelity(
     wigner_data: np.ndarray,
