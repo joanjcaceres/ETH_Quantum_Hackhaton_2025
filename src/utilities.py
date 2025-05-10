@@ -16,14 +16,14 @@ class TomographyMetrics:
     eig_rec: np.ndarray
     
     def __repr__(self) -> str:
-        return (f"TomographyMetrics(\n"
+        return (
                 f"  fidelity: {self.fidelity:.6f},\n"
                 f"  trace_dist: {self.trace_dist:.6f},\n"
                 f"  HS_dist: {self.HS_dist:.6f},\n"
                 f"  purity_rec: {self.purity_rec:.6f},\n"
                 f"  eig_true: {np.array2string(self.eig_true, precision=4, separator=', ')},\n"
                 f"  eig_rec: {np.array2string(self.eig_rec, precision=4, separator=', ')}\n"
-                f")")
+                )
     
     
 def rho_cat_state(N: int, alpha: float, sign: str = '+') -> dq.QArray:
