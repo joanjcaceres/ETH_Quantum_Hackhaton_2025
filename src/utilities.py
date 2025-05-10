@@ -3,7 +3,7 @@ import cvxpy as cp
 import dynamiqs as dq
 import jax.numpy as jnp
 from scipy.interpolate import RegularGridInterpolator
-from typing import Sequence, Optional, List, Tuple, Dict, Any
+from typing import Sequence, Optional, List, Tuple
 from dataclasses import dataclass
 
 @dataclass
@@ -190,3 +190,46 @@ def rho_reconstruction(
     )
 
     return rho_reconstructed, w_k, E_ops_big, metrics
+
+def integral_2d(dx, dy, z):
+    return dx * dy * np.nansum(z)
+
+def rescale_wigner(x_values, y_values, wigner_values):
+    mask_not_nan = ~np.isnan(wigner_values)
+
+    #estimate b from outside a circle and a from normalization
+    X, Y = np.meshgrid(x_values, y_values, indexing='xy')
+    radius = 5.5
+    mask = (X**2 + Y**2) >= radius**2
+    mask &= mask_not_nan
+
+    b = np.mean(wigner_values[mask])
+    dx = x_values[1] - x_values[0]
+    dy = y_values[1] - y_values[0]
+    a = integral_2d(dx, dy, wigner_values[mask_not_nan] - b)
+
+    #affine correction
+    corrected_wigner = np.nan_to_num((wigner_values - b) / a)
+
+    #apply 2D Gaussian filter
+    return corrected_wigner,a,b
+
+def get_denoising_fidelity(
+    wigner_data: np.ndarray,
+    x_values : np.ndarray,
+    y_values: np.ndarray,
+    noiseless_quantum_state: dq.QArrayLike
+    ):
+    
+    x_jax = jnp.asarray(x_values)
+    y_jax = jnp.asarray(y_values)
+
+    # Compute Wigner function using Dynamiqs
+    _,_, true_wigner = dq.wigner(noiseless_quantum_state, xvec=x_jax, yvec=y_jax)
+    true_wigner = jnp.nan_to_num(true_wigner)
+
+    dx = x_values[1] - x_values[0]
+    dy = y_values[1] - y_values[0]
+    fidelity = jnp.pi * jnp.sum(true_wigner* wigner_data) * dx * dy
+
+    return float(fidelity)
