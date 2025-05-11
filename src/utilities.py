@@ -148,6 +148,7 @@ def rho_reconstruction(
         E_np = np.array(E.data)[:N_psi, :N_psi]
         E_np = 0.5 * (E_np + E_np.conj().T)  # ensure Hermitian
         E_matrices.append(E_np)
+    E_stack = np.stack(E_matrices)  # shape (num_alpha, N_psi, N_psi)
         
     # 6) Solve least-squares tomography via CVXPY
     rho_var = cp.Variable((N_psi, N_psi), complex=True)
@@ -157,17 +158,20 @@ def rho_reconstruction(
         rho_var == rho_var.H # Hermitian
     ]
     
-    p_preds = [cp.real(cp.trace(E_matrices[i] @ rho_var)) for i in range(len(E_matrices))]
+    # Vectorized predicted probabilities using stacked POVM matrices
+    w_k_arr = np.array(w_k)
+    # p_preds_vec is a CVXPY expression of shape (num_alpha,)
+    p_preds_vec = cp.real(cp.sum(cp.multiply(E_stack, rho_var), axis=(1, 2)))
     # Select optimization objective
     if objective == 'sum_squares':
-        obj = cp.Minimize(cp.sum_squares(cp.hstack(p_preds) - np.array(w_k)))
+        obj = cp.Minimize(cp.sum_squares(p_preds_vec - w_k_arr))
     elif objective == 'sum_absolute':
-        obj = cp.Minimize(cp.norm(cp.hstack(p_preds) - np.array(w_k), 1))
+        obj = cp.Minimize(cp.norm(p_preds_vec - w_k_arr, 1))
     else:
         raise ValueError(f"Unsupported objective: {objective}")
 
     problem = cp.Problem(obj, constraints)
-    problem.solve(solver=solver, max_iters=max_iters)
+    problem.solve(solver=solver, max_iters=max_iters, warm_start=True)
     rho_opt = rho_var.value
     rho_reconstructed = dq.asqarray(rho_opt)
 
