@@ -1,6 +1,7 @@
 import numpy as np
 import cvxpy as cp
 import dynamiqs as dq
+import jax
 import jax.numpy as jnp
 from scipy.interpolate import RegularGridInterpolator
 from typing import Sequence, Optional, List, Tuple
@@ -128,19 +129,26 @@ def rho_reconstruction(
         raise ValueError(f"W_grid shape {W_grid.shape} does not match xvec and pvec lengths {len(xvec)}, {len(pvec)}")
         
     W_interp = RegularGridInterpolator((xvec, pvec), W_grid, bounds_error=False, fill_value=0.0)
-    wigner_fn = lambda x, p: W_interp((x, p))
         
     # Calculate expected measurement outcomes from Wigner
-    w_k = [0.5 * (1 + (np.pi / 2) * wigner_fn(alpha.real, alpha.imag))
-           for alpha in alpha_list]
+    alphas = np.array(alpha_list)
+    x_coords = alphas.real
+    p_coords = alphas.imag
+    points = np.column_stack([x_coords, p_coords])  # shape (N, 2)
+    w_values = W_interp(points)  # vectorized evaluation
+    w_k = 0.5 * (1 + (np.pi / 2) * w_values)
     
     if N_fit is None:
         N_fit = 2 * N_psi  # ensure larger dimension
-    # Build POVM elements E(alpha) = ½(I + D(alpha) P D(alpha)†)
+    # Build POVM elements E(alpha) vectorized via jax.vmap
     I_big = dq.eye(N_fit)
     P_big = dq.parity(N_fit)
-    E_ops_big = [0.5 * (I_big + dq.displace(N_fit, alpha) @ P_big @ dq.displace(N_fit, alpha).dag())
-             for alpha in alpha_list]
+    alphas_jax = jnp.array(alpha_list)
+    def _build_E_op(alpha):
+        D = dq.displace(N_fit, alpha)
+        return 0.5 * (I_big + D @ P_big @ D.dag())
+    # Vectorized map over all alphas without explicit Python loops
+    E_ops_big = list(jax.vmap(_build_E_op)(alphas_jax))
     
     # Convert E_ops → NumPy matrices for CVXPY
     E_matrices = []
